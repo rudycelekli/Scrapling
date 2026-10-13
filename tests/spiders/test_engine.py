@@ -187,6 +187,26 @@ def _make_engine(
 # ---------------------------------------------------------------------------
 
 
+class TestItemHookReturnValues:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("streamed", [False, True])
+    async def test_empty_processed_item_is_retained(self, streamed):
+        spider = MockSpider(on_scraped_item_fn=lambda item: {})
+        engine = _make_engine(spider=spider)
+        send, receive = anyio.create_memory_object_stream[dict](1)
+        async with send, receive:
+            if streamed:
+                engine._item_stream = send
+            request = Request("https://example.com", sid="default")
+            await engine._run_callbacks(request, MockResponse())
+            assert engine.stats.items_scraped == 1
+            assert engine.stats.items_dropped == 0
+            if streamed:
+                assert receive.receive_nowait() == {}
+            else:
+                assert engine.items == [{}]
+
+
 class TestDumpHelper:
     def test_dump_returns_json_string(self):
         result = _dump({"key": "value"})

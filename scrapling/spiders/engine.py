@@ -166,7 +166,7 @@ class CrawlerEngine:
                         log.debug(f"Filtered offsite request to: {result.url}")
                 elif isinstance(result, dict):
                     processed_result = await self.spider.on_scraped_item(result)
-                    if processed_result:
+                    if processed_result is not None:
                         self.stats.items_scraped += 1
                         log.debug(f"Scraped from {str(response)}\n{pprint.pformat(processed_result)}")
                         if self._item_stream:
